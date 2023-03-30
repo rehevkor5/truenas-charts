@@ -61,7 +61,8 @@ objectData: The object data to be used to render the container.
           {{- end -}}
 
           {{- $tcpProtocols := (list "tcp" "http" "https") -}}
-          {{- $protocol := tpl ($portValues.protocol | default $rootCtx.Values.fallbackDefaults.serviceProtocol) $rootCtx -}}
+          {{- $fallbackDefaults := default (dict) $rootCtx.Values.fallbackDefaults }}
+          {{- $protocol := tpl ($portValues.protocol | default $fallbackDefaults.serviceProtocol | default "tcp") $rootCtx -}}
           {{- if mustHas $protocol $tcpProtocols -}}
             {{- $protocol = "tcp" -}}
           {{- end }}

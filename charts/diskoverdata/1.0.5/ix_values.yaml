@@ -80,4 +80,6 @@ service:
     enabled: true
     ports:
       es-port:
+        enabled: true
         port: 9200
+        protocol: tcp
