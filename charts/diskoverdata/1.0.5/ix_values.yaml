@@ -4,10 +4,9 @@ image:
   tag: "2.0.1"
 
 elasticsearch:
-  image:
-    pullPolicy: IfNotPresent
-    repository: docker.elastic.co/elasticsearch/elasticsearch
-    tag: "7.5.2"
+  pullPolicy: IfNotPresent
+  repository: docker.elastic.co/elasticsearch/elasticsearch
+  tag: "7.5.2"
 
 python:
   image:
@@ -16,3 +15,69 @@ python:
     tag: "3.10"
 
 es_user: elasticsearch
+
+global:
+  labels: {}
+  annotations: {}
+
+workload:
+  elasticsearch:
+    enabled: true
+    type: Deployment
+    podSpec:
+      labels: {}
+      containers:
+        diskoverdata:
+          enabled: true
+          imageSelector: elasticsearch
+          env:
+            "discovery.type": "single-node"
+          probes:
+            liveness:
+              port: 9200
+              path: /
+              spec:
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 5
+                successThreshold: 1
+            readiness:
+              port: 9200
+              spec:
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 5
+                successThreshold: 2
+            startup:
+              port: 9200
+              spec:
+                initialDelaySeconds: 10
+                periodSeconds: 5
+                timeoutSeconds: 2
+                failureThreshold: 60
+                successThreshold: 1
+          resources:
+            requests:
+              cpu: "{{ .Values.esresources.requests.cpu }}"
+              memory: "{{ .Values.esresources.requests.memory }}"
+            limits:
+              cpu: "{{ .Values.esresources.limits.cpu }}"
+              memory: "{{ .Values.esresources.limits.memory }}"
+persistence:
+  esdata:
+    enabled: true
+    type: ixVolume
+    mountPath: "{{ .Values.elasticSearchAppVolumeMounts.esdata.mountPath }}"
+    datasetName: "{{ .Values.elasticSearchAppVolumeMounts.esdata.datasetName }}"
+    targetSelector:
+      elasticsearch:
+        diskoverdata:
+          mountPath: "{{ .Values.elasticSearchAppVolumeMounts.esdata.mountPath }}"
+service:
+  elasticsearch:
+    enabled: true
+    ports:
+      es-port:
+        port: 9200

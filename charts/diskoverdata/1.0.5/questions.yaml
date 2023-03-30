@@ -7,8 +7,8 @@ groups:
     description: "Networking Configuration for Diskover"
   - name: "Advanced DNS Settings"
     description: "Configure DNS settings"
-  - name: "Resource Limits"
-    description: "Set CPU/memory limits for Kubernetes Pod"
+  - name: "Pod Resources"
+    description: "Set CPU/memory requests or limits for Kubernetes Pods"
 
 portals:
   web_portal:
@@ -134,12 +134,17 @@ questions:
                   type: string
 
   - variable: cronjobSchedule
-    description: "Cronjobs Consist on 5 values in this specific format 'Minute Hour Day Month Week'"
-    label: "Define cronjob schedule for diskover"
+    description: "Controls the schedule for Diskover to crawl each directory's contents and updates its index"
+    label: "Indexer crawl cron schedule"
     group: "Configuration"
     schema:
-      type: string
-      default: "0 3 * * *"
+      type: cron
+      default:
+        minute: "0"
+        hour: "3"
+        dom: "*"
+        month: "*"
+        dow: "*"
 
   - variable: appVolumeMounts
     label: "Diskover Storage"
@@ -205,6 +210,12 @@ questions:
                   hidden: true
                   editable: true
                   default: "/data"
+              - variable: readOnly
+                label: "Read Only"
+                description: "Mount in read-only mode"
+                schema:
+                  type: boolean
+                  default: false
               - variable: hostPathEnabled
                 label: "Enable Custom Host Path for Diskover Data folder to monitor"
                 schema:
@@ -217,9 +228,9 @@ questions:
                       schema:
                         type: hostpath
                         required: true
-
   - variable: extraDataVolumeMounts
     label: "Add Extra Host Paths For Diskover To Monitor"
+    description: "Each additional host path will have its own Index in Diskover"
     group: "Storage"
     schema:
       type: list
@@ -242,6 +253,12 @@ questions:
                 schema:
                   type: hostpath
                   required: true
+              - variable: readOnly
+                label: "Read Only"
+                description: "Mount in read-only mode"
+                schema:
+                  type: boolean
+                  default: false
 
   - variable: extraAppVolumeMounts
     label: "Extra Host Path Volumes"
@@ -296,27 +313,96 @@ questions:
                   editable: false
                   default: "/usr/share/elasticsearch/data"
 
-  - variable: enableResourceLimits
-    label: "Enable Pod resource limits"
-    group: "Resource Limits"
+  - variable: resources
+    label: "Diskover Pod resources"
+    group: "Pod Resources"
     schema:
-      type: boolean
-      default: false
-  - variable: cpuLimit
-    label: "CPU Limit"
-    description: "CPU resource limit allow  plain integer values with suffix m(milli) e.g 1000m, 100."
-    group: "Resource Limits"
+      type: dict
+      attrs:
+        - variable: requests
+          label: "Requests"
+          description: "Specifies the minimum guaranteed resources for each Pod"
+          schema:
+            type: dict
+            attrs:
+              - variable: cpu
+                label: "CPU"
+                description: "Integer number of cores or millicores with suffix 'm', e.g 4000m, 4"
+                schema:
+                  type: string
+                  valid_chars: "^\\d+(?:\\.\\d+(?!.*m$)|m?$)"
+                  default: "10m"
+              - variable: memory
+                label: "Memory"
+                description: "Integer number of bytes. Can use a quantity suffix like E,P,T,G,M,k or Ei,Pi,Ti,Mi,Gi,Ki. e.g 129e6, 129M, 128974848000m, 123Mi"
+                schema:
+                  type: string
+                  valid_chars: "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
+                  default: "50Mi"
+        - variable: limits
+          label: "Limits"
+          description: "Specifies the maximum allowed resources for each Pod. Set to 0 to disable."
+          schema:
+            type: dict
+            attrs:
+              - variable: cpu
+                label: "CPU"
+                description: "Integer number of cores or millicores with suffix 'm', e.g 4000m, 4"
+                schema:
+                  type: string
+                  valid_chars: "^\\d+(?:\\.\\d+(?!.*m$)|m?$)"
+                  default: "4000m"
+              - variable: memory
+                label: "Memory"
+                description: "Integer number of bytes. Can use a quantity suffix like E,P,T,G,M,k or Ei,Pi,Ti,Mi,Gi,Ki. e.g 129e6, 129M, 128974848000m, 123Mi"
+                schema:
+                  type: string
+                  valid_chars: "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
+                  default: "8Gi"
+
+  - variable: esresources
+    label: "ElasticSearch Pod resources"
+    group: "Pod Resources"
     schema:
-      type: string
-      show_if: [["enableResourceLimits", "=", true]]
-      valid_chars: "^\\d+(?:\\.\\d+(?!.*m$)|m?$)"
-      default: "4000m"
-  - variable: memLimit
-    label: "Memory Limit"
-    group: "Resource Limits"
-    description: "Memory limits is specified by number of bytes. Followed by quantity suffix like E,P,T,G,M,k and Ei,Pi,Ti,Mi,Gi,Ki can also be used. e.g 129e6, 129M,  128974848000m, 123Mi"
-    schema:
-      type: string
-      show_if: [["enableResourceLimits", "=", true]]
-      valid_chars: "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
-      default: "8Gi"
+      type: dict
+      attrs:
+        - variable: requests
+          label: "Requests"
+          description: "Specifies the minimum guaranteed resources for each Pod"
+          schema:
+            type: dict
+            attrs:
+              - variable: cpu
+                label: "CPU"
+                description: "Integer number of cores or millicores with suffix 'm', e.g 4000m, 4"
+                schema:
+                  type: string
+                  valid_chars: "^\\d+(?:\\.\\d+(?!.*m$)|m?$)"
+                  default: "10m"
+              - variable: memory
+                label: "Memory"
+                description: "Integer number of bytes. Can use a quantity suffix like E,P,T,G,M,k or Ei,Pi,Ti,Mi,Gi,Ki. e.g 129e6, 129M, 128974848000m, 123Mi"
+                schema:
+                  type: string
+                  valid_chars: "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
+                  default: "50Mi"
+        - variable: limits
+          label: "Limits"
+          description: "Specifies the maximum allowed resources for each Pod. Set to 0 to disable."
+          schema:
+            type: dict
+            attrs:
+              - variable: cpu
+                label: "CPU"
+                description: "Integer number of cores or millicores with suffix 'm', e.g 4000m, 4"
+                schema:
+                  type: string
+                  valid_chars: "^\\d+(?:\\.\\d+(?!.*m$)|m?$)"
+                  default: "4000m"
+              - variable: memory
+                label: "Memory"
+                description: "Integer number of bytes. Can use a quantity suffix like E,P,T,G,M,k or Ei,Pi,Ti,Mi,Gi,Ki. e.g 129e6, 129M, 128974848000m, 123Mi"
+                schema:
+                  type: string
+                  valid_chars: "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
+                  default: "8Gi"

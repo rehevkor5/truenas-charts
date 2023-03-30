@@ -26,5 +26,10 @@ timezone: "America/Los_Angeles"
 diskoverCredentials:
   username: admin
   password: admin
-cronjobSchedule: "0 3 * * *"
+cronjobSchedule:
+  minute: "0"
+  hour: "3"
+  dom: "*"
+  month: "*"
+  dow: "*"
 es_user: elasticsearch

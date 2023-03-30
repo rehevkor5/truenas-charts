@@ -74,7 +74,7 @@ spec:
 
       containers:
         - name: {{ .Chart.Name }}
-          {{ include "common.resources.limitation" . | nindent 10 }}
+          {{ include "ix.v1.common.lib.container.resources" (dict "rootCtx" $ "objectData" .Values) | trim | nindent 10 }}
           {{ include "common.containers.imageConfig" .Values.image | nindent 10 }}
           volumeMounts: {{ include "common.storage.configureAppVolumeMountsInContainer" .Values | nindent 12 }}
             - name: diskover-initial-scripts
@@ -86,12 +86,15 @@ spec:
           {{ range $index, $hostPathConfiguration := .Values.extraDataVolumeMounts }}
             - name: extradatavolume-{{ $index }}
               mountPath: {{ $hostPathConfiguration.mountPath }}
+              {{ if $hostPathConfiguration.readOnly }}
+              readOnly: {{ $hostPathConfiguration.readOnly }}
+              {{ end }}
           {{ end }}
 
           ports:
             - name: web
               containerPort: 80
-          {{ $cronjobSchedule := .Values.cronjobSchedule }}
+          {{ $cronjobSchedule := include "cronExpression" .Values.cronjobSchedule }}
           lifecycle:
             postStart:
               exec:
@@ -106,7 +109,7 @@ spec:
                 {{ range $index, $hostPathConfiguration := .Values.extraDataVolumeMounts }}
                    echo "{{$cronjobSchedule}} python3 /app/diskover/diskover.py {{ $hostPathConfiguration.mountPath }}" >> /config/crontab;
                 {{ end }}
-                   echo "{{.Values.cronjobSchedule}} python3 /app/diskover/diskover.py /data" >> /config/crontab;
+                   echo "{{$cronjobSchedule}} python3 /app/diskover/diskover.py /data" >> /config/crontab;
                    crontab /config/crontab;
           env:
             {{ $envListDiskover := (default list .Values.environmentVariables) }}

@@ -17,14 +17,14 @@ objectData: The object data to be used to render the container.
   {{- include "ix.v1.common.lib.container.resources.validation" (dict "resources" $resources) -}}
 
 requests:
-  cpu: {{ $resources.requests.cpu }}
-  memory: {{ $resources.requests.memory }}
+  cpu: {{ tpl (toString $resources.requests.cpu) $rootCtx }}
+  memory: {{ tpl (toString $resources.requests.memory) $rootCtx }}
   {{- if $resources.limits }}
 limits:
-    {{- with $resources.limits.cpu }} {{/* Passing 0, will not render it, meaning unlimited */}}
+    {{- with (tpl (toString $resources.limits.cpu) $rootCtx) }} {{/* Passing 0, will not render it, meaning unlimited */}}
   cpu: {{ . }}
     {{- end -}}
-    {{- with $resources.limits.memory }} {{/* Passing 0, will not render it, meaning unlimited */}}
+    {{- with (tpl (toString $resources.limits.memory) $rootCtx) }} {{/* Passing 0, will not render it, meaning unlimited */}}
   memory: {{ . }}
     {{- end -}}
     {{- include "ix.v1.common.lib.container.resources.gpu" (dict "rootCtx" $rootCtx "objectData" $objectData) | trim | nindent 2 -}}

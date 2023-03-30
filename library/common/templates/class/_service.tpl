@@ -11,7 +11,8 @@ objectData: The service data, that will be used to render the Service object.
   {{- $rootCtx := .rootCtx -}}
   {{- $objectData := .objectData -}}
 
-  {{- $svcType := $objectData.type | default $rootCtx.Values.fallbackDefaults.serviceType -}}
+  {{- $fallbackDefaults := default (dict) $rootCtx.Values.fallbackDefaults }}
+  {{- $svcType := $objectData.type | default $fallbackDefaults.serviceType | default "ClusterIP" -}}
 
   {{/* Init variables */}}
   {{- $hasHostPort := false -}}

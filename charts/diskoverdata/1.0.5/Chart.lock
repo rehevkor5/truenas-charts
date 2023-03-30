@@ -1,6 +1,9 @@
 dependencies:
 - name: common
-  repository: file://../../../common/2207.0.0
+  repository: file://../../../library/common/2207.0.0
   version: 2207.0.0
-digest: sha256:a301ba0f99ec1e08a60a7f0a0320aa02d225993572f2f056f09520f06df88b37
-generated: "2023-03-22T16:30:35.212843915Z"
+- name: common
+  repository: file://../../../library/common/
+  version: 1.0.0
+digest: sha256:0d5febf0384468c16b9336e4d8ed2490b6364865cd00e5191abf2a019db65721
+generated: "2023-03-26T19:15:12.287675813-05:00"
